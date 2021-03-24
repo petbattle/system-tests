@@ -19,8 +19,9 @@ pipeline {
 		GIT_CREDS = credentials("${OPENSHIFT_BUILD_NAMESPACE}-git-auth")
 	}
 	parameters {
-		string(name: 'APP_NAME', defaultValue: '', description: 'The service or app to be promote if successful')
-		string(name: 'VERSION', defaultValue: '', description: 'The version of the given app to promote')
+		string(name: 'APP_NAME', defaultValue: '', description: 'The service or app to be promote if successful eg pet_battle_stage')
+		string(name: 'VERSION', defaultValue: '', description: 'The version of the given app to promote eg 1.2.1')
+		string(name: 'CHART_VERSION', defaultValue: '', description: 'The version of the chart to apply given app to promote eg 1.0.1')
 	}
 	options {
 		buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '2'))
