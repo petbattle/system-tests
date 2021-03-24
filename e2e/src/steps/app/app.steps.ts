@@ -16,5 +16,5 @@ Given(/^I am on the home page$/, async () => {
 When(/^I do nothing$/, () => {});
 
 Then(/^I should see welcome message$/, async () => {
-  expect(await page.getTitleText()).to.equal('home works!');
+  expect(await page.getTitleText()).to.equal('It\'s Cat Vs Cat in this purrfect competition.');
 });

@@ -1,4 +1,4 @@
-Feature: Go to the home
+Feature: Go to the PB home page
   Display the title
 
   Scenario: Home Page
