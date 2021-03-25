@@ -8,6 +8,7 @@ Run `npm run e2e` to execute the end-to-end tests via [Protractor](http://www.pr
 
 You can run `npm run e2e:headless` if you don't want the browser popping up annoying you 🤗.
 
+You can run `npm run e2e -- --specs='./src/features/app.feature'` if you want to test a single feature.
 
 ## 🏃‍♀️Running end-to-end tests against Selenium Grid
 1. Deploy Zalenium using helm to a target namespace eg `testy-mctestface`:
