@@ -6,6 +6,7 @@ pipeline {
 		// GLobal Vars
 		E2E_APP_NAME = "pet-battle"
 		PROJECT_NAMESPACE = "labs-test"
+		DESTINATION_NAMESPACE = "labs-staging"
 
 		// ArgoCD Config Repo
 		ARGOCD_CONFIG_REPO = "github.com/petbattle/ubiquitous-journey.git"
