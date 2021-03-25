@@ -88,7 +88,6 @@ pipeline {
 			steps {
 				echo '### Commit new image tag to git ###'
 				sh  '''
-					CHART_VERSION=$(yq eval .version chart/Chart.yaml)
 					git clone https://${GIT_CREDS}@${ARGOCD_CONFIG_REPO} config-repo
 					cd config-repo
 					git checkout ${ARGOCD_CONFIG_REPO_BRANCH} # master or main
