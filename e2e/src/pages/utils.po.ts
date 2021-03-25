@@ -27,6 +27,9 @@ export class Utils {
   waitForAng() {
     return browser.waitForAngular();
   }
+  waitForAngularEnabled(toggle: boolean) {
+    return browser.waitForAngularEnabled(toggle);
+  }
 
   waitForId(id: string) {
     return browser.wait(ExpectedConditions.visibilityOf(this.getById(`${id}`)), 10000);
