@@ -116,7 +116,7 @@ pipeline {
 						label=$(oc get dc/${APP_NAME} -o yaml -n ${DESTINATION_NAMESPACE}  | yq e '.metadata.labels["app.kubernetes.io/version"]' -)
 						sleep 1
 					done
-					oc rollout status --timeout=2m deployment/${APP_NAME} -n ${DESTINATION_NAMESPACE} || rc1=$?
+					oc rollout status --timeout=2m dc/${APP_NAME} -n ${DESTINATION_NAMESPACE} || rc1=$?
 					if [[ $rc1 != '' ]]; then
 						yq eval -i .applications.${APP_NAME}.source_ref=\\"${PREVIOUS_CHART_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
 						yq eval -i .applications.${APP_NAME}.values.image_version=\\"${PREVIOUS_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
