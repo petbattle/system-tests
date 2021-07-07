@@ -41,11 +41,6 @@ pipeline {
     steps {
       script {
         // ensure the name is k8s compliant
-        env.NAME = "${JOB_NAME}".split("/")[0]
-        env.APP_NAME = "${NAME}".replace("/", "-").toLowerCase()
-        env.DESTINATION_NAMESPACE = "labs-test"
-        // External image push registry info
-        env.QUAY_PUSH_SECRET = "petbattle-jenkinspb-pull-secret"
         env.IMAGE_NAMESPACE = env.QUAY_ACCOUNT != null ? "${QUAY_ACCOUNT}" : "petbattle"
         env.IMAGE_REPOSITORY = "quay.io"
         env.ARGOCD_CONFIG_REPO = "${ARGOCD_CONFIG_REPO}"
