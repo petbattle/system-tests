@@ -15,12 +15,12 @@ pipeline {
 		APP_OF_APP_NAME = "${APP_NAME}".replace("-", "_").plus("_stage")
 
 		// ArgoCD Config Repo
-		ARGOCD_CONFIG_REPO = "github.com/petbattle/ubiquitous-journey.git"
+// 		ARGOCD_CONFIG_REPO = "github.com/petbattle/ubiquitous-journey.git"
 		ARGOCD_CONFIG_REPO_PATH = "applications/deployment/values-applications-stage.yaml"
 		ARGOCD_CONFIG_REPO_BRANCH = "main"
 
-		IMAGE_NAMESPACE = "petbattle"
-		IMAGE_REPOSITORY = "quay.io"
+// 		IMAGE_NAMESPACE = "petbattle"
+// 		IMAGE_REPOSITORY = "quay.io"
 		
 		// Credentials bound in OpenShift
 		GIT_CREDS = credentials("${OPENSHIFT_BUILD_NAMESPACE}-git-auth")
@@ -30,7 +30,29 @@ pipeline {
 		timeout(time: 15, unit: 'MINUTES')
 		ansiColor('gnome')
 	}
-
+  stage("📝 Prepare Environment") {
+    options {
+      skipDefaultCheckout(true)
+    }
+    agent { label "master" }
+    when {
+      expression { GIT_BRANCH.startsWith("master") || GIT_BRANCH.startsWith("main") }
+    }
+    steps {
+      script {
+        // ensure the name is k8s compliant
+        env.NAME = "${JOB_NAME}".split("/")[0]
+        env.APP_NAME = "${NAME}".replace("/", "-").toLowerCase()
+        env.DESTINATION_NAMESPACE = "labs-test"
+        // External image push registry info
+        env.QUAY_PUSH_SECRET = "petbattle-jenkinspb-pull-secret"
+        env.IMAGE_NAMESPACE = env.QUAY_ACCOUNT != null ? "${QUAY_ACCOUNT}" : "petbattle"
+        env.IMAGE_REPOSITORY = "quay.io"
+        env.ARGOCD_CONFIG_REPO = "${ARGOCD_CONFIG_REPO}"
+      }
+      sh 'printenv'
+    }
+  }
 	stages {
 		stage("🧪 system tests") {
 			agent {
