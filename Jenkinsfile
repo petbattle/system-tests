@@ -30,26 +30,26 @@ pipeline {
 		timeout(time: 15, unit: 'MINUTES')
 		ansiColor('gnome')
 	}
-  stage("📝 Prepare Environment") {
-    options {
-      skipDefaultCheckout(true)
-    }
-    agent { label "master" }
-    when {
-      expression { GIT_BRANCH.startsWith("master") || GIT_BRANCH.startsWith("main") }
-    }
-    steps {
-      script {
-        // ensure the name is k8s compliant
-        env.IMAGE_NAMESPACE = env.QUAY_ACCOUNT != null ? "${QUAY_ACCOUNT}" : "petbattle"
-        env.IMAGE_REPOSITORY = "quay.io"
-        env.ARGOCD_CONFIG_REPO = "${ARGOCD_CONFIG_REPO}"
-      }
-      sh 'printenv'
-    }
-  }
 	stages {
-		stage("🧪 system tests") {
+    stage("📝 Prepare Environment") {
+      options {
+        skipDefaultCheckout(true)
+      }
+      agent { label "master" }
+      when {
+        expression { GIT_BRANCH.startsWith("master") || GIT_BRANCH.startsWith("main") }
+      }
+      steps {
+        script {
+          // ensure the name is k8s compliant
+          env.IMAGE_NAMESPACE = env.QUAY_ACCOUNT != null ? "${QUAY_ACCOUNT}" : "petbattle"
+          env.IMAGE_REPOSITORY = "quay.io"
+          env.ARGOCD_CONFIG_REPO = "${ARGOCD_CONFIG_REPO}"
+        }
+        sh 'printenv'
+      }
+    }
+    stage("🧪 system tests") {
 			agent {
 				label "jenkins-agent-npm"
 			}
