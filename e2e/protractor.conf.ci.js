@@ -3,6 +3,7 @@ const protractorBase = require('./protractor.conf');
 
 const overRideConfig = {
   seleniumAddress: `http://${process.env.ZALENIUM_SERVICE_HOST}/wd/hub`,
+//   seleniumAddress: `http://selenium-hub:4444`,
   baseUrl: `http://${process.env.E2E_TEST_ROUTE}/`,
   directConnect: false,
   multiCapabilities: [
@@ -12,12 +13,13 @@ const overRideConfig = {
         args: ['--window-size=1280x800', '--headless', '--disable-gpu', '--no-sandbox'],
       },
     },
-    {
-      browserName: 'firefox',
-      'moz:firefoxOptions': {
-        args: ['--headless', '--window-size=1280,800', '--width=1280', '--height=800'],
-      },
-    },
+    // times out in oldy Zalenium :shrug:
+    // {
+    //   browserName: 'firefox',
+    //   'moz:firefoxOptions': {
+    //     args: ['--headless', '--window-size=1280,800', '--width=1280', '--height=800'],
+    //   },
+    // },
   ],
   // Here the magic happens
   plugins: [
