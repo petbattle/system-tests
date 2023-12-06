@@ -3,27 +3,27 @@ pipeline {
 		label "master"
 	}
 	parameters {
-		string(name: 'APP_NAME', defaultValue: '', description: 'The service or app to be promote if successful eg pet-battle')
-		string(name: 'VERSION', defaultValue: '', description: 'The version of the given app to promote eg 1.2.1')
-		string(name: 'CHART_VERSION', defaultValue: '', description: 'The version of the chart to apply given app to promote eg 1.0.1')
+		string(name: 'APP_NAME', defaultValue: 'pet-battle', description: 'The service or app to be promote if successful eg pet-battle')
+		string(name: 'VERSION', defaultValue: '1.2.0', description: 'The version of the given app to promote eg 1.2.1')
+		string(name: 'CHART_VERSION', defaultValue: '1.0.6', description: 'The version of the chart to apply given app to promote eg 1.0.1')
 	}
 	environment {
 		// GLobal Vars
 		E2E_APP_NAME = "pet-battle"
-		PROJECT_NAMESPACE = "labs-test"
-		DESTINATION_NAMESPACE = "labs-staging"
 		APP_OF_APP_NAME = "${APP_NAME}".replace("-", "_").plus("_stage")
+		GIT_SSL_NO_VERIFY = true
 
 		// ArgoCD Config Repo
-// 		ARGOCD_CONFIG_REPO = "github.com/petbattle/ubiquitous-journey.git"
-		ARGOCD_CONFIG_REPO_PATH = "applications/deployment/values-applications-stage.yaml"
+		ARGOCD_CONFIG_REPO_PATH = "pet-battle/stage/values.yaml"
 		ARGOCD_CONFIG_REPO_BRANCH = "main"
 
-// 		IMAGE_NAMESPACE = "petbattle"
-// 		IMAGE_REPOSITORY = "quay.io"
-		
 		// Credentials bound in OpenShift
 		GIT_CREDS = credentials("${OPENSHIFT_BUILD_NAMESPACE}-git-auth")
+		NEXUS_CREDS = credentials("${OPENSHIFT_BUILD_NAMESPACE}-nexus-password")
+
+		// Nexus Artifact repo
+		NEXUS_REPO_NAME="labs-static"
+		NEXUS_REPO_HELM = "helm-charts"
 	}
 	options {
 		buildDiscarder(logRotator(numToKeepStr: '50', artifactNumToKeepStr: '2'))
@@ -41,10 +41,11 @@ pipeline {
       }
       steps {
         script {
-          // ensure the name is k8s compliant
-          env.IMAGE_NAMESPACE = env.QUAY_ACCOUNT != null ? "${QUAY_ACCOUNT}" : "petbattle"
-          env.IMAGE_REPOSITORY = "quay.io"
-          env.ARGOCD_CONFIG_REPO = "${ARGOCD_CONFIG_REPO}"
+		  env.TEAM_NAME = "${GITLAB_GROUP_NAME}"
+		  env.DESTINATION_NAMESPACE = "${TEAM_NAME}-stage"
+		  env.PROJECT_NAMESPACE = "${TEAM_NAME}-test"
+		  env.ARGOCD_CONFIG_REPO = "${GITLAB_HOST}/${GITLAB_GROUP_NAME}/tech-exercise.git"
+		  env.IMAGE_REPOSITORY = 'image-registry.openshift-image-registry.svc:5000'
         }
         sh 'printenv'
       }
@@ -97,8 +98,21 @@ pipeline {
 				}
 			}
 		}
-
-		stage("🚚 Promote to Staging") {
+		stage("🚚 Promote image to Stage") {
+		options {
+			skipDefaultCheckout(true)
+		}
+		agent { label "master" }
+		when {
+			expression { GIT_BRANCH.startsWith("master") || GIT_BRANCH.startsWith("main") }
+		}
+		steps {
+			sh '''
+				oc tag ${PROJECT_NAMESPACE}/${APP_NAME}:${VERSION} ${DESTINATION_NAMESPACE}/${APP_NAME}:${VERSION}
+			'''
+		}
+		}
+		stage("🚚 Deploy to Stage") {
 			agent {
 				label "jenkins-agent-argocd"
 			}
@@ -112,14 +126,14 @@ pipeline {
 					cd config-repo
 					git checkout ${ARGOCD_CONFIG_REPO_BRANCH} # master or main
 		
-					PREVIOUS_VERSION=$(yq eval .applications.${APP_OF_APP_NAME}.values.image_version "${ARGOCD_CONFIG_REPO_PATH}")
-					PREVIOUS_CHART_VERSION=$(yq eval .applications.${APP_OF_APP_NAME}.source_ref "${ARGOCD_CONFIG_REPO_PATH}")
+					PREVIOUS_VERSION=$(yq eval .applications.\\"${APP_NAME}\\".values.image_version "${ARGOCD_CONFIG_REPO_PATH}")
+					PREVIOUS_CHART_VERSION=$(yq eval .applications.\\"${APP_NAME}\\".source_ref "${ARGOCD_CONFIG_REPO_PATH}")
 
 					# patch ArgoCD App config with new app & chart version
-					yq eval -i .applications.${APP_OF_APP_NAME}.source_ref=\\"${CHART_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
-					yq eval -i .applications.${APP_OF_APP_NAME}.values.image_version=\\"${VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
-					yq eval -i .applications.${APP_OF_APP_NAME}.values.image_namespace=\\"${IMAGE_NAMESPACE}\\" "${ARGOCD_CONFIG_REPO_PATH}"
-					yq eval -i .applications.${APP_OF_APP_NAME}.values.image_repository=\\"${IMAGE_REPOSITORY}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+					yq eval -i .applications.\\"${APP_NAME}\\".source_ref=\\"${CHART_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+					yq eval -i .applications.\\"${APP_NAME}\\".values.image_version=\\"${VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+					yq eval -i .applications.\\"${APP_NAME}\\".values.image_namespace=\\"${DESTINATION_NAMESPACE}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+					yq eval -i .applications.\\"${APP_NAME}\\".values.image_repository=\\"${IMAGE_REPOSITORY}\\" "${ARGOCD_CONFIG_REPO_PATH}"
 
 					# Commit the changes :P
 					git config --global user.email "jenkins@rht-labs.bot.com"
@@ -138,8 +152,8 @@ pipeline {
 					done
 					oc rollout status --timeout=2m dc/${APP_NAME} -n ${DESTINATION_NAMESPACE} || rc1=$?
 					if [[ $rc1 != '' ]]; then
-						yq eval -i .applications.${APP_OF_APP_NAME}.source_ref=\\"${PREVIOUS_CHART_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
-						yq eval -i .applications.${APP_OF_APP_NAME}.values.image_version=\\"${PREVIOUS_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+						yq eval -i .applications.\\"${APP_NAME}\\".source_ref=\\"${PREVIOUS_CHART_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
+						yq eval -i .applications.\\"${APP_NAME}\\".values.image_version=\\"${PREVIOUS_VERSION}\\" "${ARGOCD_CONFIG_REPO_PATH}"
 
 						git add ${ARGOCD_CONFIG_REPO_PATH}
 						git commit -m "😢🤦🏻‍♀️ AUTOMATED COMMIT - ${APP_NAME} deployment is reverted to version ${PREVIOUS_VERSION} 😢🤦🏻‍♀️" || rc2=$?
