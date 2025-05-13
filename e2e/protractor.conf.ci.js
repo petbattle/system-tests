@@ -10,7 +10,11 @@ const overRideConfig = {
     {
       browserName: 'chrome',
       chromeOptions: {
-        args: ['--window-size=1280x800', '--headless', '--disable-gpu', '--no-sandbox'],
+        args: ['--window-size=1280x800', '--headless', '--disable-gpu', '--no-sandbox', '--disable-infobars', '--disable-extensions', '--disable-web-security'],
+      },
+      trustAllSSLCertificates: true,
+      acceptInsecureCerts: true,
+      ACCEPT_SSL_CERTS: true,
       },
     },
     // times out in oldy Zalenium :shrug:
