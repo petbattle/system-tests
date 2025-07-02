@@ -15,15 +15,7 @@ const overRideConfig = {
       trustAllSSLCertificates: true,
       acceptInsecureCerts: true,
       ACCEPT_SSL_CERTS: true,
-      },
     },
-    // times out in oldy Zalenium :shrug:
-    // {
-    //   browserName: 'firefox',
-    //   'moz:firefoxOptions': {
-    //     args: ['--headless', '--window-size=1280,800', '--width=1280', '--height=800'],
-    //   },
-    // },
   ],
   // Here the magic happens
   plugins: [
