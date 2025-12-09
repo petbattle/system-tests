@@ -2,9 +2,9 @@ const _ = require('lodash');
 const protractorBase = require('./protractor.conf');
 
 const overRideConfig = {
-  seleniumAddress: `http://${process.env.ZALENIUM_SERVICE_HOST}/wd/hub`,
+  seleniumAddress: `https://${process.env.ZALENIUM_SERVICE_HOST}/wd/hub`,
 //   seleniumAddress: `http://selenium-hub:4444`,
-  baseUrl: `http://${process.env.E2E_TEST_ROUTE}/`,
+  baseUrl: `https://${process.env.E2E_TEST_ROUTE}/`,
   directConnect: false,
   multiCapabilities: [
     {
